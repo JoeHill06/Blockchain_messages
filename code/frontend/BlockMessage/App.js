@@ -7,6 +7,7 @@ import Icon from 'react-native-vector-icons/FontAwesome';
 import LoginScreen from './screens/LoginScreen';
 import HomeScreen from './screens/HomeScreen';
 import ProfileScreen from './screens/ProfileScreen';
+import MessageScreen from './screens/MessageScreen';
 import { AuthProvider } from './contexts/AuthContext';
 
 
@@ -47,6 +48,7 @@ export default function App() {
         <Stack.Navigator initialRouteName="Login">
           <Stack.Screen name="Login" component={LoginScreen} />
           <Stack.Screen name="Tabs" component={HomeTabs} options={{headerShown: false}}/>
+          <Stack.Screen name="MessageScreen" component={MessageScreen} options ={{headerShown: true}}/>
         </Stack.Navigator>
       </NavigationContainer>
     </AuthProvider>

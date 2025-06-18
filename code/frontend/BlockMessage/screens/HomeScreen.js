@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -7,40 +7,57 @@ import {
   TouchableOpacity,
   StyleSheet,
   SafeAreaView,
+  RefreshControl,
+  Image
 } from 'react-native';
 
 import { getUserConversations } from '../services/conversationServices';
 
 class Conversation {
-  constructor({ username, lastMessage, timestamp }) {
+  constructor({ conversation_id, username,user_id, partner_user_id, lastMessage, timestamp, profile_url }) {
+    this.conversation_id = conversation_id;
     this.conversationName = username;
+    this.user_id = user_id;
+    this.other_user_id = partner_user_id;
     this.lastMessage = lastMessage;
     this.timestamp = timestamp;
+    this.profile_url = profile_url;
   }
 }
 
 export default function HomeScreen({ navigation }) {
   const [search, setSearch] = useState('');
   const [conversations, setConversations] = useState([]);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchData = async () => {
+    try {
+      const response = await getUserConversations();
+      if (response?.conversations) {
+        const mapped = response.conversations.map((item) =>
+          new Conversation({
+            conversation_id: item.conversation_id,
+            user_id: item.user_id,
+            sender_id: item.other_user_id,
+            username: item.partner_username,
+            lastMessage: item.last_message,
+            timestamp: new Date(item.last_updated).toLocaleTimeString(),
+            profile_url: item.partner_profile_url, 
+          })
+        );
+        setConversations(mapped);
+      }
+    } catch (error) {
+      console.error("Failed to fetch conversations", error);
+    }
+  };
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    fetchData().then(() => setRefreshing(false));
+  }, []);
 
   useEffect(() => {
-    async function fetchData() {
-      try {
-        const response = await getUserConversations();
-        if (response?.conversations) {
-          const mapped = response.conversations.map((item) =>
-            new Conversation({
-              username: item.partner_username,
-              lastMessage: item.last_message,
-              timestamp: new Date(item.last_updated).toLocaleTimeString(),
-            })
-          );
-          setConversations(mapped);
-        }
-      } catch (error) {
-        console.error("Failed to fetch conversations", error);
-      }
-    }
     fetchData();
   }, []);
 
@@ -48,15 +65,30 @@ export default function HomeScreen({ navigation }) {
     c.conversationName.toLowerCase().includes(search.toLowerCase())
   );
 
-  const renderItem = ({ item }) => (
-    <TouchableOpacity style={styles.messageItem}>
-      <View style={styles.textContainer}>
-        <Text style={styles.name}>{item.conversationName}</Text>
-        <Text style={styles.preview}>{item.lastMessage}</Text>
-      </View>
-      <Text style={styles.time}>{item.timestamp}</Text>
-    </TouchableOpacity>
-  );
+  const renderItem = ({ item }) => {
+    
+    return (
+      <TouchableOpacity
+        style={styles.messageItem}
+        onPress={() =>
+          navigation.navigate('MessageScreen', {
+            conversation_id: item.conversation_id,
+            sender_id: item.other_user_id,
+            user_id: item.user_id,
+            sender_name: item.conversationName,
+            profileUrl: item.profile_url
+          })
+        }
+      >
+        <View style={styles.textContainer}>
+          <Image source={{ uri: item.profile_url }} style={styles.avatar} />
+          <Text style={styles.name}>{item.conversationName}</Text>
+          <Text style={styles.preview}>{item.lastMessage}</Text>
+        </View>
+        <Text style={styles.time}>{item.timestamp}</Text>
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -74,6 +106,9 @@ export default function HomeScreen({ navigation }) {
         keyExtractor={(item, index) => index.toString()}
         renderItem={renderItem}
         contentContainerStyle={styles.listContent}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
       />
     </SafeAreaView>
   );
@@ -132,4 +167,10 @@ const styles = StyleSheet.create({
     color: '#888',
     alignSelf: 'flex-start',
   },
+  avatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 10,
+  }
 });
