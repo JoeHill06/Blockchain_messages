@@ -14,7 +14,6 @@ The purpose of this project is to demonstrate how blockchain technology can be u
 - Every message is written to a block and mined on the blockchain
 - Blockchain is validated and auditable via dedicated endpoints
 - Proof-of-work algorithm ensures blocks cannot be easily faked
-- Fully decentralized structure in concept (modular enough to be distributed)
 
 ## Tech Stack
 
