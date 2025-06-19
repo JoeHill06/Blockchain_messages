@@ -6,8 +6,9 @@ import {
   StyleSheet,
   SafeAreaView,
   FlatList,
+  Button,
 } from 'react-native';
-import { getChatMessages } from '../services/conversationServices';
+import { getChatMessages, sendMessgage } from '../services/conversationServices';
 
 class Message {
     constructor({ receiver_id, sender_id, message, timestamp, profile_url }) {
@@ -21,20 +22,26 @@ class Message {
 
 export default function MessageScreen({ navigation, route }) {
     const {conversation_id,user_id, sender_id, sender_name, profileUrl } = route.params;
-    const [search, setSearch] = useState('');
+    const [Message, setMessage ] = useState('');
     const [messages, setMessages] = useState([]);
 
     useEffect(() => {
         navigation.setOptions({ title: sender_name });
-        const socket = getChatMessages(conversation_id, (data) => {
-            console.log("Received data:", data);
-            if (data && Array.isArray(data.messages)) {
-                setMessages(data.messages);
-            }
+      
+        // Disconnect any old listeners
+        const socket = getChatMessages(conversation_id, user_id, (data) => {
+          console.log("Received data:", data);
+          if (data && Array.isArray(data.messages)) {
+            setMessages(data.messages);
+          }
         });
-
-        return () => socket.disconnect();
-    }, [navigation, sender_name, conversation_id]);
+      
+        // 🔥 Clean up the socket listener for this component
+        return () => {
+          socket.off("chat_messages"); // removes listener
+          socket.disconnect();         // optional: if you want to fully disconnect
+        };
+      }, [conversation_id, user_id, navigation, sender_name]);
 
     const renderItem = ({ item }) => (
       <View style={[
@@ -59,8 +66,28 @@ export default function MessageScreen({ navigation, route }) {
       <TextInput
         style={styles.input}
         placeholder="Type a message..."
-        value={search}
-        onChangeText={setSearch}
+        value={Message}
+        onChangeText={setMessage}
+        keyboardType='default'
+      />
+      <Button
+        title="Send"
+        onPress={() => {
+            // Validate the message before sending
+            if (Message.trim() === "") return;
+
+            // Send the message
+            sendMessgage(conversation_id, Message, user_id);
+
+            // get messages 
+            getChatMessages(conversation_id, user_id)
+
+            // Clear the input
+            setMessage('');
+
+            // Optionally log or perform more actions
+            console.log("Message sent!");
+        }}
       />
     </SafeAreaView>
   );
