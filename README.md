@@ -87,4 +87,7 @@ Each block on the chain contains:
 1. Navigate to the backend directory.
 2. Run the Flask server:
    ```bash
-   python app.py
+   python main.py
+3. Run npm install to get react packagges from package.json
+4. run pip install -r requirements.txt to get python packages
+5. run npx expo start -c to start react native expo app 
