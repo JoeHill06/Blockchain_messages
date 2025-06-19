@@ -90,4 +90,9 @@ Each block on the chain contains:
    python main.py
 3. Run npm install to get react packagges from package.json
 4. run pip install -r requirements.txt to get python packages
-5. run npx expo start -c to start react native expo app 
+5. run npx expo start -c to start react native expo app
+
+### How To Improve
+1. make the blockchain decentralised from the backend server
+2. increase security, including passwords
+3. Create method for checking the blockchain is currenlty valid
